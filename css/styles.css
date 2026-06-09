@@ -460,6 +460,36 @@ p  { font-size: 17px; line-height: 1.65; }
     opacity: 1;
 }
 
+/* --- App store badges --- */
+.store-badge {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.store-badge img {
+    height: 100%;
+    width: auto;
+    display: block;
+}
+
+/* Keep badges the same height as the buttons in each action row */
+.hero__actions .btn,
+.hero__actions .store-badge,
+.access__actions .btn,
+.access__actions .store-badge {
+    height: 54px;
+}
+
+a.store-badge:hover {
+    transform: translateY(-2px);
+    opacity: 0.88;
+}
+
+/* Placeholder badge (no link yet) */
+.store-badge--soon { cursor: default; }
+
 /* --- Trust strip --- */
 .trust-strip {
     background: var(--bg-secondary);
@@ -736,6 +766,14 @@ p  { font-size: 17px; line-height: 1.65; }
 
 .access__step h4 { margin-bottom: 6px; font-size: 16px; }
 .access__step p { font-size: 14px; color: var(--text-secondary); }
+
+.access__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
 
 /* --- CTA Section --- */
 .cta-section {
