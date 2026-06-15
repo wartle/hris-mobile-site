@@ -74,6 +74,19 @@ document.querySelectorAll('.media-skeleton__img').forEach(img => {
     }
 });
 
+// Launch announcement bar — dismiss and remember for the session
+const launchBar = document.getElementById('launch-bar');
+const launchBarClose = document.getElementById('launch-bar-close');
+if (launchBar && launchBarClose) {
+    try {
+        if (sessionStorage.getItem('dhris_launchbar_dismissed')) launchBar.classList.add('is-hidden');
+    } catch (e) { /* ignore storage errors */ }
+    launchBarClose.addEventListener('click', () => {
+        launchBar.classList.add('is-hidden');
+        try { sessionStorage.setItem('dhris_launchbar_dismissed', '1'); } catch (e) {}
+    });
+}
+
 // Footer year
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();

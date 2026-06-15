@@ -9,8 +9,19 @@
     <link rel="icon" type="image/png" href="images/icons/app-icon.png">
     <link rel="apple-touch-icon" href="images/icons/app-icon.png">
     <link rel="stylesheet" href="css/styles.css">
+    <script>try { if (sessionStorage.getItem('dhris_launchbar_dismissed')) document.documentElement.classList.add('lb-dismissed'); } catch (e) {}</script>
 </head>
 <body>
+
+    <!-- Launch announcement -->
+    <div class="launch-bar" id="launch-bar" role="region" aria-label="Launch announcement">
+        <a class="launch-bar__msg" href="https://play.google.com/store/apps/details?id=online.dalaguete.hris" target="_blank" rel="noopener">
+            <span class="launch-bar__dot" aria-hidden="true"></span>
+            <span><strong>Now live on Google Play</strong> <span class="launch-bar__sub">— Dalaguete HRIS is officially available today.</span></span>
+            <span class="launch-bar__cta">Get the app&nbsp;&rarr;</span>
+        </a>
+        <button class="launch-bar__close" id="launch-bar-close" type="button" aria-label="Dismiss announcement">&times;</button>
+    </div>
 
     <!-- Header -->
     <header class="header">

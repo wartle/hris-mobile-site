@@ -1062,3 +1062,110 @@ a.store-badge:hover {
     .cta-section__actions .btn { width: 100%; }
     .privacy-summary { padding: 24px; }
 }
+
+/* ============================================
+   Launch day — announcement bar, live badge, focus, motion
+   ============================================ */
+
+/* Sitewide launch announcement bar (scrolls away above the sticky header) */
+.launch-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    position: relative;
+    background: linear-gradient(90deg, #4A148C 0%, #6A1B9A 45%, #2E7D32 100%);
+    color: #fff;
+    text-align: center;
+    padding: 9px 46px;
+    font-size: 14.5px;
+    line-height: 1.35;
+}
+
+.launch-bar__msg {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: #fff;
+}
+
+.launch-bar__msg:hover { opacity: 0.96; }
+.launch-bar strong { font-weight: 700; }
+.launch-bar__sub { color: #fff; }
+.launch-bar__cta { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+.launch-bar__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #A5F3A0;
+    flex-shrink: 0;
+    animation: lb-pulse 2.2s ease-out infinite;
+}
+
+.launch-bar__close {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.82;
+    padding: 2px 9px;
+    border-radius: 8px;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.launch-bar__close:hover { opacity: 1; background: rgba(255, 255, 255, 0.16); }
+.launch-bar.is-hidden { display: none; }
+/* Hidden before paint on later pages once dismissed this session (no flash / no layout shift) */
+html.lb-dismissed .launch-bar { display: none; }
+
+@keyframes lb-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(165, 243, 160, 0.6); }
+    70%  { box-shadow: 0 0 0 10px rgba(165, 243, 160, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(165, 243, 160, 0); }
+}
+
+/* Hero "now live" badge pulse dot */
+.hero__badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #A5F3A0;
+    flex-shrink: 0;
+    animation: lb-pulse 2.2s ease-out infinite;
+}
+
+/* Gentle ambient drift on the hero light (depth without distraction) */
+.hero::before { animation: hero-drift 20s ease-in-out infinite alternate; }
+@keyframes hero-drift {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(2.5%, 2%); }
+}
+
+/* Accessible keyboard focus (previously relying on the UA default) */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.hero :focus-visible,
+.security :focus-visible,
+.cta-section :focus-visible,
+.page-header :focus-visible,
+.launch-bar :focus-visible { outline-color: #fff; }
+a.store-badge:focus-visible { outline: 2px solid #66BB6A; outline-offset: 4px; }
+
+@media (max-width: 560px) {
+    .launch-bar { font-size: 13.5px; padding: 8px 38px; }
+    .launch-bar__sub { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .launch-bar__dot,
+    .hero__badge-dot { animation: none; }
+    .hero::before { animation: none; }
+}

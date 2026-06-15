@@ -13,8 +13,170 @@
     <meta property="og:type" content="website">
     <meta property="og:image" content="images/icons/app-icon.png">
     <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Launch intro overlay: critical CSS inlined so it paints before css/styles.css (no FOUC).
+         Only active when JS adds .li-active to <html>, so no-JS users get the normal page. -->
+    <style id="launch-intro-css">
+    #launch-intro { display: none; }
+    html.li-active { overflow: hidden; scroll-behavior: auto; }
+    html.li-active body { overflow: hidden; }
+    html.li-active #launch-intro { display: flex; }
+    #launch-intro {
+        position: fixed; inset: 0; z-index: 99999;
+        align-items: center; justify-content: center;
+        background: #4A148C;
+        background:
+            radial-gradient(120% 80% at 50% -10%, rgba(171,71,188,.45) 0%, rgba(171,71,188,0) 55%),
+            radial-gradient(120% 90% at 50% 115%, rgba(102,187,106,.42) 0%, rgba(102,187,106,0) 55%),
+            linear-gradient(150deg, #4A148C 0%, #6A1B9A 42%, #2E7D32 100%);
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden; opacity: 1;
+        transition: opacity .9s cubic-bezier(.4,0,.2,1);
+        -webkit-font-smoothing: antialiased;
+    }
+    #launch-intro.li-hide { opacity: 0; pointer-events: none; }
+    #launch-intro::before {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(closest-side, rgba(255,255,255,.10), rgba(255,255,255,0) 70%);
+        background-repeat: no-repeat; background-position: 50% 38%; background-size: 140% 140%;
+        animation: li-breathe 9s ease-in-out infinite;
+    }
+    #launch-intro::after {
+        content: ""; position: absolute; inset: 0; opacity: .06; pointer-events: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    }
+    .li-stage {
+        position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+        text-align: center; padding: 32px 24px; max-width: 680px; width: 100%;
+        opacity: 0; transform: translateY(14px);
+        animation: li-enter 1.2s cubic-bezier(.22,1,.36,1) .12s forwards;
+    }
+    .li-eyebrow {
+        font-size: .72rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase;
+        color: rgba(255,255,255,.8); margin-bottom: 30px; display: inline-flex; align-items: center; gap: .7em;
+    }
+    .li-eyebrow::before, .li-eyebrow::after {
+        content: ""; width: 26px; height: 1px;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.55));
+    }
+    .li-eyebrow::after { background: linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,0)); }
+    .li-ring-wrap { position: relative; width: 300px; height: 300px; display: grid; place-items: center; margin-bottom: 6px; }
+    .li-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 14px rgba(255,255,255,.30)); }
+    .li-ring__track { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 6; }
+    .li-ring__bar { fill: none; stroke: url(#liGrad); stroke-width: 7; stroke-linecap: round; will-change: stroke-dashoffset; }
+    .li-medallion {
+        position: relative; width: 134px; height: 134px; border-radius: 50%;
+        background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.55), 0 16px 40px rgba(0,0,0,.32);
+        overflow: hidden; z-index: 1; display: grid; place-items: center;
+    }
+    .li-medallion .li-seal {
+        position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 13px;
+        transition: opacity .9s ease, transform 1s cubic-bezier(.22,1,.36,1);
+    }
+    .li-seal--lgu { opacity: 1; transform: scale(1); }
+    .li-seal--app { opacity: 0; transform: scale(1.1); }
+    .li-medallion.is-morphed .li-seal--lgu { opacity: 0; transform: scale(.92); }
+    .li-medallion.is-morphed .li-seal--app { opacity: 1; transform: scale(1); }
+    .li-count { margin-top: 18px; line-height: 1; }
+    .li-count__num {
+        font-size: 3.4rem; font-weight: 300; letter-spacing: -.02em;
+        font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+        color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,.25);
+    }
+    .li-count__unit {
+        display: block; font-size: .6rem; font-weight: 600; letter-spacing: .34em;
+        text-transform: uppercase; color: rgba(255,255,255,.6); margin-top: 12px;
+    }
+    .li-headline { font-size: clamp(1.5rem, 4.4vw, 2.1rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.18; margin-top: 30px; max-width: 18ch; color: #fff; }
+    .li-sub { font-size: clamp(.92rem, 2.4vw, 1.02rem); font-weight: 400; line-height: 1.55; color: rgba(255,255,255,.78); margin-top: 14px; max-width: 42ch; }
+    .li-skip {
+        margin-top: 34px; appearance: none; border: 1px solid rgba(255,255,255,.32);
+        background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: .82rem;
+        font-weight: 600; letter-spacing: .04em; padding: 11px 26px; border-radius: 999px; cursor: pointer;
+        transition: background .25s, border-color .25s, transform .15s;
+        -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    }
+    .li-skip:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.55); }
+    .li-skip:active { transform: translateY(1px); }
+    .li-skip:focus-visible { outline: 2px solid #66BB6A; outline-offset: 3px; }
+    .li-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes li-enter { to { opacity: 1; transform: translateY(0); } }
+    @keyframes li-breathe { 0%, 100% { opacity: .55; background-position: 50% 38%; } 50% { opacity: 1; background-position: 50% 44%; } }
+    @media (prefers-reduced-motion: reduce) {
+        #launch-intro { transition: opacity .3s ease; }
+        #launch-intro::before { animation: none; opacity: .7; }
+        .li-stage { animation: none; opacity: 1; transform: none; }
+    }
+    @media (max-width: 480px) {
+        .li-ring-wrap { width: 248px; height: 248px; }
+        .li-medallion { width: 112px; height: 112px; }
+        .li-count__num { font-size: 2.8rem; }
+        .li-headline { margin-top: 24px; }
+    }
+    </style>
+    <script>
+    /* Activate the launch overlay before the body paints (no FOUC).
+       Shows once per browser session; force a replay with index.html?intro (or #replay). */
+    (function () {
+        var ONCE = true;              /* set to false to show the countdown on EVERY page load */
+        var KEY = 'dhris_launch_intro_v1';
+        var force = false;
+        try { force = /\b(intro|replay)\b/.test(location.search + ' ' + location.hash); } catch (e) {}
+        if (ONCE && !force) {
+            try { if (sessionStorage.getItem(KEY)) return; } catch (e) {}
+        }
+        try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+        document.documentElement.classList.add('li-active');
+        /* Failsafe: never gate the page for more than 12s, even if the controller fails to run */
+        setTimeout(function () { document.documentElement.classList.remove('li-active'); }, 12000);
+    })();
+    </script>
+    <script>try { if (sessionStorage.getItem('dhris_launchbar_dismissed')) document.documentElement.classList.add('lb-dismissed'); } catch (e) {}</script>
 </head>
 <body>
+
+    <!-- Launch countdown intro overlay (index only) -->
+    <div id="launch-intro" role="dialog" aria-modal="true" aria-labelledby="li-headline" aria-describedby="li-sub" tabindex="-1">
+        <div class="li-stage">
+            <span class="li-eyebrow">Launching Today &middot; Municipality of Dalaguete</span>
+            <div class="li-ring-wrap">
+                <svg class="li-ring" viewBox="0 0 300 300" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="liGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#AB47BC"/>
+                            <stop offset="55%" stop-color="#66BB6A"/>
+                            <stop offset="100%" stop-color="#43A047"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="li-ring__track" cx="150" cy="150" r="130"/>
+                    <circle class="li-ring__bar" cx="150" cy="150" r="130"/>
+                </svg>
+                <div class="li-medallion" id="li-medallion">
+                    <img class="li-seal li-seal--lgu" src="images/lgu-logo.png" alt="Municipality of Dalaguete official seal" width="120" height="120" fetchpriority="high">
+                    <img class="li-seal li-seal--app" src="images/icons/app-icon.png" alt="Dalaguete HRIS app icon" width="120" height="120" decoding="async">
+                </div>
+            </div>
+            <div class="li-count" aria-hidden="true">
+                <span class="li-count__num">10</span>
+                <span class="li-count__unit">seconds to launch</span>
+            </div>
+            <div class="li-headline" id="li-headline">A new standard for public service begins</div>
+            <p class="li-sub" id="li-sub">Dalaguete HRIS — attendance and HR self-service, now in the hands of every municipal employee.</p>
+            <button class="li-skip" type="button" aria-label="Skip the launch countdown and enter the site">Skip intro</button>
+            <span class="li-sr" aria-live="polite" role="status">Launching in 10 seconds.</span>
+        </div>
+    </div>
+
+    <!-- Launch announcement -->
+    <div class="launch-bar" id="launch-bar" role="region" aria-label="Launch announcement">
+        <a class="launch-bar__msg" href="https://play.google.com/store/apps/details?id=online.dalaguete.hris" target="_blank" rel="noopener">
+            <span class="launch-bar__dot" aria-hidden="true"></span>
+            <span><strong>Now live on Google Play</strong> <span class="launch-bar__sub">— Dalaguete HRIS is officially available today.</span></span>
+            <span class="launch-bar__cta">Get the app&nbsp;&rarr;</span>
+        </a>
+        <button class="launch-bar__close" id="launch-bar-close" type="button" aria-label="Dismiss announcement">&times;</button>
+    </div>
 
     <!-- Header -->
     <header class="header">
@@ -43,7 +205,7 @@
 
     <!-- Hero -->
     <section class="hero">
-        <div class="hero__badge">🏛️ Official app of the Municipality of Dalaguete</div>
+        <div class="hero__badge"><span class="hero__badge-dot" aria-hidden="true"></span> Now live &middot; Official app of the Municipality of Dalaguete</div>
         <h1>Attendance &amp; HR, right in your pocket</h1>
         <p class="hero__subtitle">Dalaguete HRIS lets municipal employees clock in with GPS-verified attendance, sign in by fingerprint, and manage leave, CDO, locators, and payslips — anytime, on the go.</p>
         <div class="hero__actions">
@@ -314,5 +476,94 @@
     </footer>
 
     <script src="js/main.js"></script>
+
+    <!-- Launch countdown controller: one rAF clock drives the ring + numeral (no drift) -->
+    <script>
+    (function () {
+        var root = document.documentElement;
+        if (!root.classList.contains('li-active')) return; /* not shown this load */
+        var el = document.getElementById('launch-intro');
+        if (!el) { root.classList.remove('li-active'); return; }
+        if (el.dataset.liDone) return;
+        el.dataset.liDone = '1';
+        try {
+            var DURATION = 10; /* seconds — single source of truth */
+            var bar = el.querySelector('.li-ring__bar');
+            var numEl = el.querySelector('.li-count__num');
+            var live = el.querySelector('.li-sr');
+            var skip = el.querySelector('.li-skip');
+            var medallion = el.querySelector('.li-medallion');
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            var MORPH_AT = DURATION / 2; /* swap the LGU seal -> HRIS icon at the midpoint (5s) */
+            var morphed = false;
+            function doMorph() { if (!morphed && medallion) { morphed = true; medallion.classList.add('is-morphed'); } }
+
+            var len = 816.814; /* 2 * PI * 130 fallback */
+            if (bar) {
+                try { var measured = bar.getTotalLength(); if (measured) len = measured; } catch (e) {}
+                bar.style.strokeDasharray = len;
+                bar.style.strokeDashoffset = '0';
+            }
+
+            var revealed = false, fallback = null;
+            function escHandler(ev) { if (ev.key === 'Escape') reveal(); }
+            /* Only the overlay's OWN opacity transition ends the intro — ignore bubbled seal-morph transitions */
+            function onEnd(ev) { if (ev.target === el && ev.propertyName === 'opacity') done(); }
+            function done() {
+                if (fallback) clearTimeout(fallback);
+                el.removeEventListener('transitionend', onEnd);
+                document.removeEventListener('keydown', escHandler, true);
+                root.classList.remove('li-active');
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            }
+            function reveal() {
+                if (revealed) return;
+                revealed = true;
+                doMorph(); /* always settle on the HRIS icon, even on Skip / Esc / tab-refocus */
+                if (live) live.textContent = 'Dalaguete HRIS is now live.';
+                el.classList.add('li-hide');
+                fallback = setTimeout(done, 1100);
+                el.addEventListener('transitionend', onEnd);
+            }
+
+            if (skip) skip.addEventListener('click', reveal);
+            document.addEventListener('keydown', escHandler, true);
+            /* Light focus containment: keep keyboard focus on the only action while the dialog is up */
+            el.addEventListener('keydown', function (ev) { if (ev.key === 'Tab') { ev.preventDefault(); if (skip) skip.focus(); } });
+            try { el.focus({ preventScroll: true }); } catch (e) {}
+
+            if (reduce) {
+                doMorph();
+                if (bar) bar.style.strokeDashoffset = len; /* match the animated end state (empty ring) */
+                if (numEl) numEl.textContent = '0';
+                if (live) live.textContent = 'Dalaguete HRIS is now live.';
+                setTimeout(reveal, 1200);
+                return;
+            }
+
+            var start = null, lastShown = null;
+            function frame(now) {
+                if (start === null) start = now;
+                var elapsed = (now - start) / 1000;
+                if (elapsed >= MORPH_AT) doMorph();
+                var frac = elapsed / DURATION;
+                if (frac > 1) frac = 1;
+                if (bar) bar.style.strokeDashoffset = (len * frac).toFixed(2);
+                var remain = Math.max(0, Math.ceil(DURATION - elapsed));
+                if (remain !== lastShown) {
+                    lastShown = remain;
+                    if (numEl) numEl.textContent = remain; /* visual only — keep the polite SR region quiet */
+                }
+                if (frac >= 1) { reveal(); return; }
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        } catch (e) {
+            /* If anything in the controller fails, never gate the page */
+            try { root.classList.remove('li-active'); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e2) {}
+        }
+    })();
+    </script>
 </body>
 </html>
