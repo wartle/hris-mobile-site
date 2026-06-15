@@ -48,58 +48,80 @@
     }
     .li-stage {
         position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
-        text-align: center; padding: 32px 24px; max-width: 680px; width: 100%;
+        text-align: center; padding: 40px 24px 48px; max-width: 680px; width: 100%;
         opacity: 0; transform: translateY(14px);
         animation: li-enter 1.2s cubic-bezier(.22,1,.36,1) .12s forwards;
     }
     .li-eyebrow {
         font-size: .72rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase;
-        color: rgba(255,255,255,.8); margin-bottom: 30px; display: inline-flex; align-items: center; gap: .7em;
+        color: rgba(255,255,255,.8); margin-bottom: 24px; display: inline-flex; align-items: center; gap: .7em;
     }
     .li-eyebrow::before, .li-eyebrow::after {
         content: ""; width: 26px; height: 1px;
         background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.55));
     }
     .li-eyebrow::after { background: linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,0)); }
-    .li-ring-wrap { position: relative; width: 300px; height: 300px; display: grid; place-items: center; margin-bottom: 6px; }
-    .li-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 14px rgba(255,255,255,.30)); }
+    .li-ring-wrap { position: relative; width: 340px; height: 340px; display: grid; place-items: center; margin-bottom: 6px; }
+    .li-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 14px rgba(255,255,255,.30)); pointer-events: none; }
     .li-ring__track { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 6; }
     .li-ring__bar { fill: none; stroke: url(#liGrad); stroke-width: 7; stroke-linecap: round; will-change: stroke-dashoffset; }
+    /* The medallion is the clickable fingerprint scanner; it reveals the seal on a successful scan. */
     .li-medallion {
-        position: relative; width: 134px; height: 134px; border-radius: 50%;
+        position: relative; width: 150px; height: 150px; border-radius: 50%;
         background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.55), 0 16px 40px rgba(0,0,0,.32);
-        overflow: hidden; z-index: 1; display: grid; place-items: center;
+        overflow: hidden; z-index: 2; display: grid; place-items: center;
+        -webkit-appearance: none; appearance: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .45s ease;
     }
+    .li-stage.is-armed .li-medallion { animation: li-med-breathe 2.4s ease-in-out infinite; }
+    .li-stage.is-armed .li-medallion:hover { transform: scale(1.045); box-shadow: 0 0 0 1px rgba(255,255,255,.75), 0 22px 50px rgba(0,0,0,.42); }
+    .li-stage.is-armed .li-medallion:active { transform: scale(.97); }
+    .li-medallion:focus-visible { outline: none; box-shadow: 0 0 0 4px #4A148C, 0 0 0 8px rgba(102,187,106,.95), 0 16px 40px rgba(0,0,0,.32); }
+    @keyframes li-med-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    /* tap ripple, shown only while waiting for the fingerprint */
+    .li-tap-pulse { position: absolute; z-index: 1; width: 150px; height: 150px; border-radius: 50%; pointer-events: none; opacity: 0; border: 2px solid rgba(102,187,106,.6); }
+    .li-stage.is-armed .li-tap-pulse { animation: li-tap 2.4s ease-out infinite; }
+    @keyframes li-tap { 0% { transform: scale(.95); opacity: .65; } 70% { opacity: 0; } 100% { transform: scale(1.4); opacity: 0; } }
+    /* fingerprint glyph layers shown inside the medallion before the logo */
+    .li-bio { position: absolute; inset: 0; transition: opacity .5s ease; }
+    .li-bio__print, .li-bio__fill { position: absolute; inset: 0; display: grid; place-items: center; }
+    .li-bio__print svg, .li-bio__fill svg { width: 58%; height: 58%; }
+    .li-bio__print { color: #7B1FA2; }
+    .li-bio__fill { color: #43A047; -webkit-clip-path: inset(100% 0 0 0); clip-path: inset(100% 0 0 0); filter: drop-shadow(0 0 4px rgba(67,160,71,.45)); transition: -webkit-clip-path 1.1s cubic-bezier(.45,0,.2,1), clip-path 1.1s cubic-bezier(.45,0,.2,1); }
+    .li-medallion.is-scanning .li-bio__fill, .li-medallion.is-done .li-bio__fill { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
+    .li-bio__line { position: absolute; left: 22%; right: 22%; top: 21%; height: 2px; border-radius: 3px; opacity: 0; pointer-events: none; background: linear-gradient(90deg, transparent, #43A047, transparent); box-shadow: 0 0 10px 2px rgba(67,160,71,.65); }
+    .li-medallion.is-scanning .li-bio__line { animation: li-bio-scan 1.1s cubic-bezier(.45,0,.2,1); }
+    @keyframes li-bio-scan { 0% { top: 21%; opacity: 0; } 14% { opacity: 1; } 86% { opacity: 1; } 100% { top: 73%; opacity: 0; } }
+    .li-medallion.is-revealed .li-bio { opacity: 0; pointer-events: none; }
+    /* seals: hidden until the fingerprint verifies, then LGU -> app icon */
     .li-medallion .li-seal {
-        position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 13px;
-        transition: opacity .9s ease, transform 1s cubic-bezier(.22,1,.36,1);
+        position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 16px;
+        opacity: 0; transform: scale(1.06);
+        transition: opacity .8s ease, transform 1s cubic-bezier(.22,1,.36,1);
     }
-    .li-seal--lgu { opacity: 1; transform: scale(1); }
-    .li-seal--app { opacity: 0; transform: scale(1.1); }
-    .li-medallion.is-morphed .li-seal--lgu { opacity: 0; transform: scale(.92); }
-    .li-medallion.is-morphed .li-seal--app { opacity: 1; transform: scale(1); }
-    .li-count { margin-top: 18px; line-height: 1; }
+    .li-medallion.is-revealed .li-seal--lgu { opacity: 1; transform: scale(1); }
+    .li-medallion.is-revealed.is-morphed .li-seal--lgu { opacity: 0; transform: scale(.92); }
+    .li-medallion.is-revealed.is-morphed .li-seal--app { opacity: 1; transform: scale(1); }
+    .li-count, .li-ring { transition: opacity .8s ease, filter .8s ease; }
+    .li-stage.is-armed .li-count { opacity: .42; filter: saturate(.55); }
+    .li-stage.is-armed .li-ring { opacity: .5; }
+    .li-count { margin-top: 14px; line-height: 1; }
     .li-count__num {
-        font-size: 3.4rem; font-weight: 300; letter-spacing: -.02em;
+        display: inline-block;
+        font-size: clamp(4rem, 13vw, 6.6rem); font-weight: 200; letter-spacing: -.04em;
         font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
-        color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,.25);
+        color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.35); will-change: transform;
     }
+    .li-count__num.is-tick { animation: li-tick .6s cubic-bezier(.22,1,.36,1); }
+    @keyframes li-tick { 0% { transform: scale(1.14); opacity: .85; } 100% { transform: scale(1); opacity: 1; } }
     .li-count__unit {
-        display: block; font-size: .6rem; font-weight: 600; letter-spacing: .34em;
-        text-transform: uppercase; color: rgba(255,255,255,.6); margin-top: 12px;
+        display: block; font-size: .66rem; font-weight: 700; letter-spacing: .4em;
+        text-transform: uppercase; color: rgba(255,255,255,.62); margin-top: 16px;
     }
     .li-headline { font-size: clamp(1.5rem, 4.4vw, 2.1rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.18; margin-top: 30px; max-width: 18ch; color: #fff; }
     .li-sub { font-size: clamp(.92rem, 2.4vw, 1.02rem); font-weight: 400; line-height: 1.55; color: rgba(255,255,255,.78); margin-top: 14px; max-width: 42ch; }
-    .li-skip {
-        margin-top: 34px; appearance: none; border: 1px solid rgba(255,255,255,.32);
-        background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: .82rem;
-        font-weight: 600; letter-spacing: .04em; padding: 11px 26px; border-radius: 999px; cursor: pointer;
-        transition: background .25s, border-color .25s, transform .15s;
-        -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    }
-    .li-skip:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.55); }
-    .li-skip:active { transform: translateY(1px); }
-    .li-skip:focus-visible { outline: 2px solid #66BB6A; outline-offset: 3px; }
+    .li-fp-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
     .li-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @keyframes li-enter { to { opacity: 1; transform: translateY(0); } }
     @keyframes li-breathe { 0%, 100% { opacity: .55; background-position: 50% 38%; } 50% { opacity: 1; background-position: 50% 44%; } }
@@ -107,12 +129,19 @@
         #launch-intro { transition: opacity .3s ease; }
         #launch-intro::before { animation: none; opacity: .7; }
         .li-stage { animation: none; opacity: 1; transform: none; }
+        .li-stage.is-armed .li-medallion, .li-stage.is-armed .li-tap-pulse { animation: none; }
+        .li-tap-pulse { opacity: .4; }
+        .li-bio__line { display: none; }
+        .li-bio__fill { transition: none; }
+        .li-count__num.is-tick { animation: none; }
     }
     @media (max-width: 480px) {
-        .li-ring-wrap { width: 248px; height: 248px; }
-        .li-medallion { width: 112px; height: 112px; }
-        .li-count__num { font-size: 2.8rem; }
-        .li-headline { margin-top: 24px; }
+        .li-ring-wrap { width: 272px; height: 272px; }
+        .li-medallion { width: 122px; height: 122px; }
+        .li-tap-pulse { width: 122px; height: 122px; }
+        .li-count__num { font-size: clamp(3.6rem, 22vw, 5.2rem); }
+        .li-count { margin-top: 14px; }
+        .li-headline { margin-top: 20px; }
     }
     </style>
     <script>
@@ -129,7 +158,7 @@
         try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
         document.documentElement.classList.add('li-active');
         /* Failsafe: never gate the page for more than 12s, even if the controller fails to run */
-        setTimeout(function () { document.documentElement.classList.remove('li-active'); }, 12000);
+        window.__liFailsafe = setTimeout(function () { document.documentElement.classList.remove('li-active'); }, 12000);
     })();
     </script>
     <script>try { if (sessionStorage.getItem('dhris_launchbar_dismissed')) document.documentElement.classList.add('lb-dismissed'); } catch (e) {}</script>
@@ -138,7 +167,7 @@
 
     <!-- Launch countdown intro overlay (index only) -->
     <div id="launch-intro" role="dialog" aria-modal="true" aria-labelledby="li-headline" aria-describedby="li-sub" tabindex="-1">
-        <div class="li-stage">
+        <div class="li-stage is-armed">
             <span class="li-eyebrow">Launching Today &middot; Municipality of Dalaguete</span>
             <div class="li-ring-wrap">
                 <svg class="li-ring" viewBox="0 0 300 300" aria-hidden="true" focusable="false">
@@ -152,10 +181,16 @@
                     <circle class="li-ring__track" cx="150" cy="150" r="130"/>
                     <circle class="li-ring__bar" cx="150" cy="150" r="130"/>
                 </svg>
-                <div class="li-medallion" id="li-medallion">
+                <span class="li-tap-pulse" aria-hidden="true"></span>
+                <button class="li-medallion" id="li-medallion" type="button" aria-label="Scan your fingerprint to launch Dalaguete HRIS">
+                    <span class="li-bio" aria-hidden="true">
+                        <span class="li-bio__print"><svg viewBox="0 0 24 24"><use href="#li-fp-print"/></svg></span>
+                        <span class="li-bio__fill"><svg viewBox="0 0 24 24"><use href="#li-fp-print"/></svg></span>
+                        <span class="li-bio__line"></span>
+                    </span>
                     <img class="li-seal li-seal--lgu" src="images/lgu-logo.png" alt="Municipality of Dalaguete official seal" width="120" height="120" fetchpriority="high">
                     <img class="li-seal li-seal--app" src="images/icons/app-icon.png" alt="Dalaguete HRIS app icon" width="120" height="120" decoding="async">
-                </div>
+                </button>
             </div>
             <div class="li-count" aria-hidden="true">
                 <span class="li-count__num">10</span>
@@ -163,8 +198,12 @@
             </div>
             <div class="li-headline" id="li-headline">A new standard for public service begins</div>
             <p class="li-sub" id="li-sub">Dalaguete HRIS — attendance and HR self-service, now in the hands of every municipal employee.</p>
-            <button class="li-skip" type="button" aria-label="Skip the launch countdown and enter the site">Skip intro</button>
-            <span class="li-sr" aria-live="polite" role="status">Launching in 10 seconds.</span>
+            <svg class="li-fp-sprite" aria-hidden="true" focusable="false">
+                <symbol id="li-fp-print" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12 3c-1.97 0-3.85.47-5.56 1.41-.24.13-.54.04-.68-.2-.14-.24-.05-.55.2-.68C7.82 2.5 9.86 2 12 2c2.14 0 4 .47 6.04 1.5.25.15.34.45.21.69-.09.18-.25.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.97 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25.16.22.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.48-6.54-1.48-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.13-.23.21-.39.21zm6.25 12.07c-.13 0-.26-.05-.35-.15-.87-.87-1.34-1.43-2.01-2.64-.69-1.23-1.05-2.73-1.05-4.34 0-2.97 2.54-5.39 5.66-5.39s5.66 2.42 5.66 5.39c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-2.42-2.09-4.39-4.66-4.39s-4.66 1.97-4.66 4.39c0 1.44.32 2.77.93 3.85.64 1.15 1.08 1.64 1.85 2.42.19.2.19.51 0 .71-.11.1-.24.15-.37.15zm7.17-1.85c-1.19 0-2.24-.3-3.1-.89-1.49-1.01-2.38-2.65-2.38-4.39 0-.28.22-.5.5-.5s.5.22.5.5c0 1.41.72 2.74 1.94 3.56.71.48 1.54.71 2.54.71.24 0 .64-.03 1.04-.1.27-.05.53.13.58.41.05.26-.13.53-.41.58-.57.11-1.07.12-1.21.12zm-2.01 2.06c-.04 0-.09-.01-.13-.02-1.59-.44-2.63-1.03-3.72-2.1-1.4-1.38-2.17-3.22-2.17-5.22 0-1.63 1.39-2.96 3.11-2.96s3.11 1.33 3.11 2.96c0 1.08.92 1.96 2.06 1.96s2.06-.88 2.06-1.96c0-4-3.47-7.25-7.73-7.25-3.03 0-5.8 1.7-7 4.34-.41.89-.62 1.93-.62 2.91 0 .73.07 1.89.63 3.4.1.26-.03.55-.29.64-.26.11-.55-.03-.64-.29-.46-1.23-.69-2.46-.69-3.75 0-1.13.24-2.32.71-3.34 1.36-2.99 4.52-4.91 7.9-4.91 4.81 0 8.73 3.7 8.73 8.25 0 1.63-1.39 2.96-3.11 2.96s-3.11-1.33-3.11-2.96c0-1.08-.92-1.96-2.06-1.96s-2.06.88-2.06 1.96c0 1.73.66 3.3 1.87 4.5.95.94 1.85 1.46 3.27 1.84.27.07.42.34.35.61-.05.22-.25.39-.47.39z"/>
+                </symbol>
+            </svg>
+            <span class="li-sr" aria-live="polite" role="status">Press the fingerprint to launch Dalaguete HRIS.</span>
         </div>
     </div>
 
@@ -487,15 +526,19 @@
         if (el.dataset.liDone) return;
         el.dataset.liDone = '1';
         try {
-            var DURATION = 10; /* seconds — single source of truth */
-            var bar = el.querySelector('.li-ring__bar');
-            var numEl = el.querySelector('.li-count__num');
-            var live = el.querySelector('.li-sr');
-            var skip = el.querySelector('.li-skip');
-            var medallion = el.querySelector('.li-medallion');
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            /* Controller is alive — cancel the head failsafe; we own the lifecycle from here. */
+            if (window.__liFailsafe) { clearTimeout(window.__liFailsafe); window.__liFailsafe = null; }
 
-            var MORPH_AT = DURATION / 2; /* swap the LGU seal -> HRIS icon at the midpoint (5s) */
+            var DURATION = 10;     /* countdown seconds — single source of truth */
+            var SCAN_MS  = 1150;   /* fingerprint scan duration (matches the CSS sweep) */
+            var bar       = el.querySelector('.li-ring__bar');
+            var numEl     = el.querySelector('.li-count__num');
+            var live      = el.querySelector('.li-sr');
+            var stage     = el.querySelector('.li-stage');
+            var medallion = el.querySelector('.li-medallion');
+            var reduce    = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            var MORPH_AT = DURATION / 2; /* swap the LGU seal -> HRIS icon at the midpoint */
             var morphed = false;
             function doMorph() { if (!morphed && medallion) { morphed = true; medallion.classList.add('is-morphed'); } }
 
@@ -506,44 +549,41 @@
                 bar.style.strokeDashoffset = '0';
             }
 
-            var revealed = false, fallback = null;
+            var revealed = false, started = false, scanning = false, fallback = null, inerted = [];
+            function unlockPage() {
+                for (var i = 0; i < inerted.length; i++) {
+                    try { inerted[i].inert = false; inerted[i].removeAttribute('aria-hidden'); } catch (e) {}
+                }
+                inerted = [];
+            }
+
             function escHandler(ev) { if (ev.key === 'Escape') reveal(); }
-            /* Only the overlay's OWN opacity transition ends the intro — ignore bubbled seal-morph transitions */
+            /* Only the overlay's OWN opacity transition ends the intro — ignore bubbled child transitions */
             function onEnd(ev) { if (ev.target === el && ev.propertyName === 'opacity') done(); }
             function done() {
                 if (fallback) clearTimeout(fallback);
                 el.removeEventListener('transitionend', onEnd);
                 document.removeEventListener('keydown', escHandler, true);
+                unlockPage();
                 root.classList.remove('li-active');
                 if (el && el.parentNode) el.parentNode.removeChild(el);
             }
             function reveal() {
                 if (revealed) return;
                 revealed = true;
-                doMorph(); /* always settle on the HRIS icon, even on Skip / Esc / tab-refocus */
+                /* always settle on the HRIS icon, even on Esc / early exit */
+                if (medallion) medallion.classList.add('is-revealed');
+                doMorph();
                 if (live) live.textContent = 'Dalaguete HRIS is now live.';
                 el.classList.add('li-hide');
                 fallback = setTimeout(done, 1100);
                 el.addEventListener('transitionend', onEnd);
             }
 
-            if (skip) skip.addEventListener('click', reveal);
-            document.addEventListener('keydown', escHandler, true);
-            /* Light focus containment: keep keyboard focus on the only action while the dialog is up */
-            el.addEventListener('keydown', function (ev) { if (ev.key === 'Tab') { ev.preventDefault(); if (skip) skip.focus(); } });
-            try { el.focus({ preventScroll: true }); } catch (e) {}
-
-            if (reduce) {
-                doMorph();
-                if (bar) bar.style.strokeDashoffset = len; /* match the animated end state (empty ring) */
-                if (numEl) numEl.textContent = '0';
-                if (live) live.textContent = 'Dalaguete HRIS is now live.';
-                setTimeout(reveal, 1200);
-                return;
-            }
-
+            /* --- countdown clock (one rAF, no drift) --- */
             var start = null, lastShown = null;
             function frame(now) {
+                if (revealed) return;
                 if (start === null) start = now;
                 var elapsed = (now - start) / 1000;
                 if (elapsed >= MORPH_AT) doMorph();
@@ -553,15 +593,85 @@
                 var remain = Math.max(0, Math.ceil(DURATION - elapsed));
                 if (remain !== lastShown) {
                     lastShown = remain;
-                    if (numEl) numEl.textContent = remain; /* visual only — keep the polite SR region quiet */
+                    if (numEl) { /* visual only — keep the polite SR region quiet */
+                        numEl.textContent = remain;
+                        numEl.classList.remove('is-tick'); void numEl.offsetWidth; numEl.classList.add('is-tick');
+                    }
                 }
                 if (frac >= 1) { reveal(); return; }
                 requestAnimationFrame(frame);
             }
-            requestAnimationFrame(frame);
+            function startCountdown() {
+                if (started || revealed) return;
+                started = true;
+                if (stage) stage.classList.remove('is-armed'); /* brighten the timer to life */
+                if (numEl) numEl.textContent = DURATION;
+                requestAnimationFrame(frame);
+            }
+
+            /* --- fingerprint (the medallion): scan, reveal the seal, then launch the countdown --- */
+            function lockMedallion() {
+                if (stage) stage.classList.remove('is-armed'); /* stop the tap-pulse / breathe */
+                if (!medallion) return;
+                medallion.classList.add('is-revealed'); /* fingerprint fades out, the seal fades in */
+                medallion.disabled = true;              /* it's no longer a control */
+                medallion.setAttribute('aria-hidden', 'true');
+                medallion.setAttribute('tabindex', '-1');
+                try { el.focus({ preventScroll: true }); } catch (e) {} /* keep focus inside the dialog */
+            }
+            function scan() {
+                if (scanning || started || revealed) return;
+                scanning = true;
+                if (reduce) {
+                    /* reduced motion: skip the scan sweep — reveal the seal, settle on the app icon, enter */
+                    lockMedallion();
+                    doMorph();
+                    if (live) live.textContent = 'Dalaguete HRIS is now live.';
+                    fallback = setTimeout(reveal, 1100);
+                    return;
+                }
+                medallion.classList.add('is-scanning');
+                if (live) live.textContent = 'Scanning fingerprint.';
+                setTimeout(function () {
+                    if (medallion) { medallion.classList.remove('is-scanning'); medallion.classList.add('is-done'); }
+                    if (live) live.textContent = 'Fingerprint verified. Launch countdown started.';
+                    setTimeout(function () {
+                        lockMedallion();      /* swap the fingerprint for the seal */
+                        startCountdown();     /* brighten the timer and start the clock */
+                    }, 360);
+                }, SCAN_MS);
+            }
+
+            if (medallion) medallion.addEventListener('click', scan);
+            document.addEventListener('keydown', escHandler, true);
+            /* Keep keyboard focus on the scanner (the only control) until the countdown starts */
+            el.addEventListener('keydown', function (ev) { if (ev.key === 'Tab') { ev.preventDefault(); if (medallion && !started) medallion.focus(); } });
+            try { if (medallion) medallion.focus({ preventScroll: true }); else el.focus({ preventScroll: true }); } catch (e) {}
+
+            /* aria-modal alone isn't reliably honored — make the rest of the page inert while the overlay is up */
+            try {
+                var kids = document.body.children;
+                for (var k = 0; k < kids.length; k++) {
+                    var node = kids[k];
+                    if (node === el || node.tagName === 'SCRIPT' || node.getAttribute('aria-hidden') === 'true') continue;
+                    node.inert = true;
+                    node.setAttribute('aria-hidden', 'true');
+                    inerted.push(node);
+                }
+            } catch (e) {}
+
+            /* No auto-start: the countdown begins only when the visitor presses the fingerprint
+               (Esc remains a hidden escape hatch). In reduced-motion mode the press skips the
+               scan sweep and enters directly — handled in scan(). */
         } catch (e) {
-            /* If anything in the controller fails, never gate the page */
-            try { root.classList.remove('li-active'); if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e2) {}
+            /* If anything in the controller fails, never gate the page (and never leave it inert) */
+            try {
+                if (typeof inerted !== 'undefined' && inerted) {
+                    for (var j = 0; j < inerted.length; j++) { try { inerted[j].inert = false; inerted[j].removeAttribute('aria-hidden'); } catch (e3) {} }
+                }
+                root.classList.remove('li-active');
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            } catch (e2) {}
         }
     })();
     </script>
