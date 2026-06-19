@@ -487,9 +487,6 @@ a.store-badge:hover {
     opacity: 0.88;
 }
 
-/* Placeholder badge (no link yet) */
-.store-badge--soon { cursor: default; }
-
 /* --- Trust strip --- */
 .trust-strip {
     background: var(--bg-secondary);
